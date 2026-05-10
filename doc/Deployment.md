@@ -25,21 +25,33 @@ aws configure
 
 ```bash
 aws s3api create-bucket \
-    --bucket devops-assessment-terraform-state \
+    --bucket devops-assessment-terraform-state-<your-suffix> \
     --region us-east-1
-    
+
 aws s3api put-bucket-versioning \
-    --bucket devops-assessment-terraform-state \
+    --bucket devops-assessment-terraform-state-<your-suffix> \
     --versioning-configuration Status=Enabled
 ```
+
+> Note: S3 bucket names are globally unique. Replace `<your-suffix>` with a unique value such as your AWS account ID, team name, or timestamp.
+>
+> In PowerShell, use the single-line commands instead of backslash continuation:
+>
+> ```powershell
+> aws s3api create-bucket --bucket devops-assessment-terraform-state-<your-suffix> --region us-east-1
+> aws s3api put-bucket-versioning --bucket devops-assessment-terraform-state-<your-suffix> --versioning-configuration Status=Enabled
+> ```
 
 ### 1.3 Deploy Infrastructure with Terraform
 
 ```bash
 cd infrastructure/terraform
 
-# Initialize Terraform
-terraform init
+# Initialize Terraform with an explicit backend bucket name
+terraform init \
+    -backend-config="bucket=devops-assessment-terraform-state-<your-suffix>" \
+    -backend-config="key=ecs/terraform.tfstate" \
+    -backend-config="region=us-east-1"
 
 # Create terraform.tfvars
 cat > terraform.tfvars << EOF
