@@ -25,13 +25,20 @@ aws configure
 
 ```bash
 aws s3api create-bucket \
-    --bucket devops-assessment-terraform-state \
+    --bucket devops-assessment-terraform-state121 \
     --region us-east-1
-    
+
 aws s3api put-bucket-versioning \
-    --bucket devops-assessment-terraform-state \
+    --bucket devops-assessment-terraform-state121 \
     --versioning-configuration Status=Enabled
 ```
+
+> Note: In PowerShell, use the single-line commands below instead of backslash continuation:
+>
+> ```powershell
+> aws s3api create-bucket --bucket devops-assessment-terraform-state121 --region us-east-1
+> aws s3api put-bucket-versioning --bucket devops-assessment-terraform-state121 --versioning-configuration Status=Enabled
+> ```
 
 ### 1.3 Deploy Infrastructure with Terraform
 
