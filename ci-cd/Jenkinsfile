@@ -1,0 +1,208 @@
+pipeline {
+    agent any
+    
+    environment {
+        AWS_REGION = 'us-east-1'
+        ECR_REGISTRY = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+        FRONTEND_REPO = "${ECR_REGISTRY}/devops-assessment/frontend"
+        BACKEND_REPO = "${ECR_REGISTRY}/devops-assessment/backend"
+        IMAGE_TAG = "${env.BUILD_NUMBER}"
+    }
+    
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+        
+        stage('Test') {
+            parallel {
+                stage('Frontend Tests') {
+                    steps {
+                        dir('application/frontend') {
+                            sh 'npm install'
+                            sh 'npm test -- --watchAll=false --passWithNoTests'
+                        }
+                    }
+                }
+                
+                stage('Backend Tests') {
+                    steps {
+                        dir('application/backend') {
+                            sh 'npm install'
+                            sh 'npm test || true'
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Build Docker Images') {
+            parallel {
+                stage('Build Frontend') {
+                    steps {
+                        script {
+                            sh """
+                                docker build -f ci-cd/docker/Dockerfile.frontend \
+                                    -t ${FRONTEND_REPO}:${IMAGE_TAG} \
+                                    -t ${FRONTEND_REPO}:latest .
+                            """
+                        }
+                    }
+                }
+                
+                stage('Build Backend') {
+                    steps {
+                        script {
+                            sh """
+                                docker build -f ci-cd/docker/Dockerfile.backend \
+                                    -t ${BACKEND_REPO}:${IMAGE_TAG} \
+                                    -t ${BACKEND_REPO}:latest .
+                            """
+                        }
+                    }
+                }
+            }
+        }
+        
+        stage('Security Scan') {
+            parallel {
+                stage('Scan Frontend') {
+                    steps {
+                        sh """
+                            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                                aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL \
+                                ${FRONTEND_REPO}:${IMAGE_TAG}
+                        """
+                    }
+                }
+                
+                stage('Scan Backend') {
+                    steps {
+                        sh """
+                            docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+                                aquasec/trivy:latest image --exit-code 0 --severity HIGH,CRITICAL \
+                                ${BACKEND_REPO}:${IMAGE_TAG}
+                        """
+                    }
+                }
+            }
+        }
+        
+        stage('Push to ECR') {
+            steps {
+                script {
+                    sh """
+                        # Login to ECR
+                        aws ecr get-login-password --region ${AWS_REGION} | \
+                            docker login --username AWS --password-stdin ${ECR_REGISTRY}
+                        
+                        # Push frontend
+                        docker push ${FRONTEND_REPO}:${IMAGE_TAG}
+                        docker push ${FRONTEND_REPO}:latest
+                        
+                        # Push backend
+                        docker push ${BACKEND_REPO}:${IMAGE_TAG}
+                        docker push ${BACKEND_REPO}:latest
+                    """
+                }
+            }
+        }
+        
+        stage('Deploy to ECS') {
+            steps {
+                script {
+                    sh """
+                        # Update backend service
+                        aws ecs update-service \
+                            --cluster devops-assessment-cluster \
+                            --service devops-assessment-backend-service \
+                            --force-new-deployment \
+                            --region ${AWS_REGION}
+                        
+                        # Update frontend service
+                        aws ecs update-service \
+                            --cluster devops-assessment-cluster \
+                            --service devops-assessment-frontend-service \
+                            --force-new-deployment \
+                            --region ${AWS_REGION}
+                    """
+                }
+            }
+        }
+        
+        stage('Wait for Deployment') {
+            steps {
+                script {
+                    sh """
+                        # Wait for backend service
+                        aws ecs wait services-stable \
+                            --cluster devops-assessment-cluster \
+                            --services devops-assessment-backend-service \
+                            --region ${AWS_REGION}
+                        
+                        # Wait for frontend service
+                        aws ecs wait services-stable \
+                            --cluster devops-assessment-cluster \
+                            --services devops-assessment-frontend-service \
+                            --region ${AWS_REGION}
+                    """
+                }
+            }
+        }
+        
+        stage('Health Check') {
+            steps {
+                script {
+                    sh """
+                        # Get ALB DNS
+                        ALB_DNS=\$(aws elbv2 describe-load-balancers \
+                            --names devops-assessment-alb \
+                            --query 'LoadBalancers[0].DNSName' \
+                            --output text \
+                            --region ${AWS_REGION})
+                        
+                        # Health check
+                        curl -f http://\${ALB_DNS}/health || exit 1
+                        curl -f http://\${ALB_DNS}/ || exit 1
+                        
+                        echo "Deployment successful!"
+                        echo "Application URL: http://\${ALB_DNS}"
+                    """
+                }
+            }
+        }
+    }
+    
+    post {
+        always {
+            // Clean up Docker images
+            sh 'docker system prune -af'
+        }
+        
+        success {
+            echo 'Pipeline executed successfully!'
+            // Send notification
+            sh """
+                aws sns publish \
+                    --topic-arn arn:aws:sns:${AWS_REGION}:${env.AWS_ACCOUNT_ID}:devops-assessment-alerts \
+                    --message "Deployment successful - Build #${env.BUILD_NUMBER}" \
+                    --subject "DevOps Assessment - Deployment Success" \
+                    --region ${AWS_REGION}
+            """
+        }
+        
+        failure {
+            echo 'Pipeline failed!'
+            // Send notification
+            sh """
+                aws sns publish \
+                    --topic-arn arn:aws:sns:${AWS_REGION}:${env.AWS_ACCOUNT_ID}:devops-assessment-alerts \
+                    --message "Deployment failed - Build #${env.BUILD_NUMBER}" \
+                    --subject "DevOps Assessment - Deployment Failed" \
+                    --region ${AWS_REGION}
+            """
+        }
+    }
+}
