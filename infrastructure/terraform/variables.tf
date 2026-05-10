@@ -26,6 +26,11 @@ variable "db_username" {
   description = "Database username"
   type        = string
   sensitive   = true
+
+  validation {
+    condition     = var.db_username != "admin" && var.db_username != "postgres" && var.db_username != "root"
+    error_message = "db_username cannot be a reserved username such as admin, postgres, or root. Choose a different user."
+  }
 }
 
 variable "db_password" {

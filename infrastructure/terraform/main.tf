@@ -9,7 +9,7 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "devops-assessment-terraform-state"
+    bucket = "devops-assessment-terraform-state121"
     key    = "ecs/terraform.tfstate"
     region = "us-east-1"
   }
