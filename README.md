@@ -1,3 +1,7 @@
+## AWS ECS Terraform Project 
+
+![architecure](./doc/screenshot/Architecture.png)
+----
 # Deployment Guide - DevOps Assessment
 
 ## Prerequisites
@@ -119,7 +123,7 @@ In Jenkins UI:
 In Pipeline Configuration → Build Environment:
 
 ### AWS_ACCOUNT_ID: [Your AWS Account ID]
-### AWS_REGION: [*I configure us-east-1*]
+### AWS_REGION: [* configure us-east-1*]
 
 ## Step 3: Initial Deployment
 

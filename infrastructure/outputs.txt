@@ -1,0 +1,5 @@
+alb_dns_name = "devops-assessment-alb-1369225890.us-east-1.elb.amazonaws.com"
+cloudwatch_dashboard_url = "https://console.aws.amazon.com/cloudwatch/home?region=us-east-1#dashboards:name=devops-assessment-dashboard"
+ecr_backend_repository_url = "577638388381.dkr.ecr.us-east-1.amazonaws.com/devops-assessment/backend"
+ecr_frontend_repository_url = "577638388381.dkr.ecr.us-east-1.amazonaws.com/devops-assessment/frontend"
+rds_endpoint = <sensitive>

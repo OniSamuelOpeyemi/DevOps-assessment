@@ -3,6 +3,7 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-east-1'
+         AWS_ACCOUNT_ID = credentials('AWS_ACCOUNT_ID')
         ECR_REGISTRY = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         FRONTEND_REPO = "${ECR_REGISTRY}/devops-assessment/frontend"
         BACKEND_REPO = "${ECR_REGISTRY}/devops-assessment/backend"
@@ -19,6 +20,12 @@ pipeline {
         stage('Test') {
             parallel {
                 stage('Frontend Tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            args '-v /tmp:/tmp'
+                        }
+                    }
                     steps {
                         dir('application/frontend') {
                             sh 'npm install'
@@ -28,6 +35,12 @@ pipeline {
                 }
                 
                 stage('Backend Tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            args '-v /tmp:/tmp'
+                        }
+                    }
                     steps {
                         dir('application/backend') {
                             sh 'npm install'
