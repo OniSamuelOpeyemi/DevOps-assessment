@@ -1,6 +1,6 @@
 ## AWS ECS Terraform Project 
 
-![architecure](./doc/screenshot/architecture.jpeg)
+![architecure](./doc/screenshot/Architecture.png)
 ----
 # Deployment Guide - DevOps Assessment
 
