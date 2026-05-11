@@ -20,6 +20,12 @@ pipeline {
         stage('Test') {
             parallel {
                 stage('Frontend Tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            args '-v /tmp:/tmp'
+                        }
+                    }
                     steps {
                         dir('application/frontend') {
                             sh 'npm install'
@@ -29,6 +35,12 @@ pipeline {
                 }
                 
                 stage('Backend Tests') {
+                    agent {
+                        docker {
+                            image 'node:18-alpine'
+                            args '-v /tmp:/tmp'
+                        }
+                    }
                     steps {
                         dir('application/backend') {
                             sh 'npm install'
