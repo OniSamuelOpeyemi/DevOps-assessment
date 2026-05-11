@@ -3,6 +3,7 @@ pipeline {
     
     environment {
         AWS_REGION = 'us-east-1'
+         AWS_ACCOUNT_ID = credentials('AWS_ACCOUNT_ID')
         ECR_REGISTRY = "${env.AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
         FRONTEND_REPO = "${ECR_REGISTRY}/devops-assessment/frontend"
         BACKEND_REPO = "${ECR_REGISTRY}/devops-assessment/backend"
