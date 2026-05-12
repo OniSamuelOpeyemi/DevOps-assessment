@@ -76,7 +76,7 @@ pipeline {
                     steps {
                         script {
                             sh """
-                                docker build -f docker/Dockerfile.frontend \
+                                docker build -f ci-cd/docker/Dockerfile.frontend \
                                     -t ${env.FRONTEND_REPO}:${IMAGE_TAG} \
                                     -t ${env.FRONTEND_REPO}:latest .
                             """
@@ -88,7 +88,7 @@ pipeline {
                     steps {
                         script {
                             sh """
-                                docker build -f docker/Dockerfile.backend \
+                                docker build -f ci-cd/docker/Dockerfile.backend \
                                     -t ${env.BACKEND_REPO}:${IMAGE_TAG} \
                                     -t ${env.BACKEND_REPO}:latest .
                             """
