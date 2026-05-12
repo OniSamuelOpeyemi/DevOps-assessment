@@ -98,6 +98,8 @@ In Jenkins UI:
    - AWS Steps
    - Pipeline
    - Git
+   - Credential binding
+   - Node for building
 
 ### 2.2 Configure AWS Credentials
 
@@ -115,7 +117,7 @@ In Jenkins UI:
 3. Pipeline → Definition: Pipeline script from SCM
 4. SCM: Git
 5. Repository URL: [Your Git Repo]
-6. Script Path: `Jenkinsfile`
+6. Script Path: `ci-cd/Jenkinsfile`
 7. Save
 
 ### 2.4 Set Environment Variables
@@ -124,6 +126,7 @@ In Pipeline Configuration → Build Environment:
 
 ### AWS_ACCOUNT_ID: [Your AWS Account ID]
 ### AWS_REGION: [* configure us-east-1*]
+N.B. I used Jenkins credential and type secret for this workflow
 
 ## Step 3: Initial Deployment
 
@@ -279,7 +282,7 @@ aws ecr batch-delete-image \
     --image-ids imageTag=latest
 ```
 
-## Cost Optimization
+## Cost Optimization (Assumptions)
 
 Estimated monthly cost: ~$50-80
 - ECS Fargate: ~$30
