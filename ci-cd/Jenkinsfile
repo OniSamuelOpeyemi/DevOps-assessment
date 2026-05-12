@@ -172,14 +172,14 @@ pipeline {
                             # Update backend service
                             aws ecs update-service \
                                 --cluster devops-assessment-cluster \
-                                --service devops-assessment-backend \
+                                --service devops-assessment-backend-service \
                                 --force-new-deployment \
                                 --region ${AWS_REGION}
                             
                             # Update frontend service
                             aws ecs update-service \
                                 --cluster devops-assessment-cluster \
-                                --service devops-assessment-frontend \
+                                --service devops-assessment-frontend-service \
                                 --force-new-deployment \
                                 --region ${AWS_REGION}
                             
@@ -203,13 +203,13 @@ pipeline {
                             # Wait for backend service (with timeout)
                             timeout 10m aws ecs wait services-stable \
                                 --cluster devops-assessment-cluster \
-                                --services devops-assessment-backend \
+                                --services devops-assessment-backend-service \
                                 --region ${AWS_REGION} || echo "Backend deployment timeout"
                             
                             # Wait for frontend service (with timeout)
                             timeout 10m aws ecs wait services-stable \
                                 --cluster devops-assessment-cluster \
-                                --services devops-assessment-frontend \
+                                --services devops-assessment-frontend-service \
                                 --region ${AWS_REGION} || echo "Frontend deployment timeout"
                             
                             echo "Services are stable"

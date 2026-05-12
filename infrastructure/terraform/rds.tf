@@ -59,7 +59,7 @@ resource "aws_db_instance" "main" {
 
 # Secrets Manager for DB Password
 resource "aws_secretsmanager_secret" "db_password" {
-  name = "${var.app_name}-db-password"
+  name_prefix = "${var.app_name}-db-password-"
 }
 
 resource "aws_secretsmanager_secret_version" "db_password" {
