@@ -204,13 +204,43 @@ pipeline {
                             timeout 10m aws ecs wait services-stable \
                                 --cluster devops-assessment-cluster \
                                 --services devops-assessment-backend-service \
-                                --region ${AWS_REGION} || echo "Backend deployment timeout"
+                                --region ${AWS_REGION} || {
+                                    echo "Backend deployment timeout"
+                                    aws ecs describe-services \
+                                        --cluster devops-assessment-cluster \
+                                        --services devops-assessment-backend-service \
+                                        --region ${AWS_REGION}
+                                    aws ecs list-tasks \
+                                        --cluster devops-assessment-cluster \
+                                        --service-name devops-assessment-backend-service \
+                                        --desired-status RUNNING \
+                                        --region ${AWS_REGION}
+                                    aws ecs describe-tasks \
+                                        --cluster devops-assessment-cluster \
+                                        --tasks $(aws ecs list-tasks --cluster devops-assessment-cluster --service-name devops-assessment-backend-service --desired-status RUNNING --region ${AWS_REGION} --output text --query taskArns) \
+                                        --region ${AWS_REGION}
+                                }
                             
                             # Wait for frontend service (with timeout)
                             timeout 10m aws ecs wait services-stable \
                                 --cluster devops-assessment-cluster \
                                 --services devops-assessment-frontend-service \
-                                --region ${AWS_REGION} || echo "Frontend deployment timeout"
+                                --region ${AWS_REGION} || {
+                                    echo "Frontend deployment timeout"
+                                    aws ecs describe-services \
+                                        --cluster devops-assessment-cluster \
+                                        --services devops-assessment-frontend-service \
+                                        --region ${AWS_REGION}
+                                    aws ecs list-tasks \
+                                        --cluster devops-assessment-cluster \
+                                        --service-name devops-assessment-frontend-service \
+                                        --desired-status RUNNING \
+                                        --region ${AWS_REGION}
+                                    aws ecs describe-tasks \
+                                        --cluster devops-assessment-cluster \
+                                        --tasks $(aws ecs list-tasks --cluster devops-assessment-cluster --service-name devops-assessment-frontend-service --desired-status RUNNING --region ${AWS_REGION} --output text --query taskArns) \
+                                        --region ${AWS_REGION}
+                                }
                             
                             echo "Services are stable"
                         """
