@@ -75,6 +75,7 @@ pipeline {
                 script {
                      sh """
                         docker compose -f ci-cd/docker/docker-compose.yml build
+                        docker image
                     
                           # Tag the built images for ECR
                         docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:${IMAGE_TAG}

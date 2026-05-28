@@ -1,17 +1,19 @@
 services:
   backend:
+    image: devops-assessment-backend:latest
     build:
       context: ../../
       dockerfile: ci-cd/docker/Dockerfile.backend
-    container_name: backend
+    container_name: devops-assessment-backend
     ports:
       - "5000:5000"
 
   frontend:
+    image: devops-assessment-frontend:latest
     build:
       context: ../../
       dockerfile: ci-cd/docker/Dockerfile.frontend
-    container_name: frontend
+    container_name: devops-assessment-frontend
     ports:
       - "8082:80"
     depends_on:
