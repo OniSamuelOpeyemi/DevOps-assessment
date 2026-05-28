@@ -71,32 +71,20 @@ pipeline {
         }
         
         stage('Build Docker Images') {
-            parallel {
-                stage('Build Frontend') {
-                    steps {
-                        script {
-                            sh """
-                                docker build -f ci-cd/docker/Dockerfile.frontend \
-                                    -t ${env.FRONTEND_REPO}:${IMAGE_TAG} \
-                                    -t ${env.FRONTEND_REPO}:latest .
-                            """
-                        }
-                    }
-                }
-                
-                stage('Build Backend') {
-                    steps {
-                        script {
-                            sh """
-                                docker build -f ci-cd/docker/Dockerfile.backend \
-                                    -t ${env.BACKEND_REPO}:${IMAGE_TAG} \
-                                    -t ${env.BACKEND_REPO}:latest .
-                            """
-                        }
-                    }
-                }
+        steps {
+            script {
+                sh """
+                    docker compose -f ci-cd/docker/docker-compose.yml build
+                    
+                    # Tag the built images for ECR
+                    docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:${IMAGE_TAG}
+                    docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:latest
+                    docker tag devops-assessment-backend:latest ${env.BACKEND_REPO}:${IMAGE_TAG}
+                    docker tag devops-assessment-backend:latest ${env.BACKEND_REPO}:latest
+                """
             }
-        }
+    }
+}
         
         stage('Security Scan') {
             parallel {
