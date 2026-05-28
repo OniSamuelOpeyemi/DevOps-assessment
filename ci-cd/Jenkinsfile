@@ -203,9 +203,16 @@ pipeline {
                                         --service-name devops-assessment-backend-service \
                                         --desired-status RUNNING \
                                         --region ${AWS_REGION}
+                                    TASK_ARNS=\$(aws ecs list-tasks \
+                                        --cluster devops-assessment-cluster \
+                                        --service-name devops-assessment-backend-service \
+                                        --desired-status RUNNING \
+                                        --region ${AWS_REGION} \
+                                        --output text --query taskArns)
+    
                                     aws ecs describe-tasks \
                                         --cluster devops-assessment-cluster \
-                                        --tasks $(aws ecs list-tasks --cluster devops-assessment-cluster --service-name devops-assessment-backend-service --desired-status RUNNING --region ${AWS_REGION} --output text --query taskArns) \
+                                        --tasks \$TASK_ARNS \
                                         --region ${AWS_REGION}
                                 }
                             
