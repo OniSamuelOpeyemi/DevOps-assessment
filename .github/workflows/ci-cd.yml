@@ -4,11 +4,11 @@ on:
   push:
     branches: 
         - master
-        - deployment
+    #    - deployment
   pull_request:
     branches: 
         - master
-        - deployment
+    #    - deployment
 
   workflow_dispatch:
 

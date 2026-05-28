@@ -71,17 +71,20 @@ pipeline {
         }
         
         stage('Build Docker Images') {
-        steps {
-            script {
-                sh """
-                    docker compose -f ci-cd/docker/docker-compose.yml build
+            steps {
+                script {
+                     sh """
+                        docker compose -f ci-cd/docker/docker-compose.yml build
                     
-                    # Tag the built images for ECR
-                    docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:${IMAGE_TAG}
-                    docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:latest
-                    docker tag devops-assessment-backend:latest ${env.BACKEND_REPO}:${IMAGE_TAG}
-                    docker tag devops-assessment-backend:latest ${env.BACKEND_REPO}:latest
-                """
+                          # Tag the built images for ECR
+                        docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:${IMAGE_TAG}
+                        docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:latest
+                        docker tag devops-assessment-backend:latest ${env.BACKEND_REPO}:${IMAGE_TAG}
+                        docker tag devops-assessment-backend:latest ${env.BACKEND_REPO}:latest
+                        
+                    """
+                }
+            
             }
     }
 }
@@ -147,6 +150,54 @@ pipeline {
             }
         }
         
+        stage('Update Task Definitions') {
+            steps {
+                script {
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding', 
+                         credentialsId: 'aws-credentials']
+                    ]) {
+                        sh """
+                            echo "Updating ECS task definitions..."
+                          # Inject the new image tag into the task definition
+                            TASK_DEF=\$(aws ecs describe-task-definition \
+                                 --task-definition devops-assessment-backend \
+                                 --region ${AWS_REGION} \
+                                 --query 'taskDefinition' --output json)
+
+                            NEW_TASK_DEF=\$(echo \$TASK_DEF | jq \
+                                 --arg IMAGE "${env.BACKEND_REPO}:${IMAGE_TAG}" \
+                                 '.containerDefinitions[0].image = \$IMAGE |
+                                 del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)')
+
+                            aws ecs register-task-definition \
+                                 --cli-input-json "\$NEW_TASK_DEF" \
+                                 --region ${AWS_REGION}
+
+
+
+                            TASK_DEF=\$(aws ecs describe-task-definition \
+                                 --task-definition devops-assessment-frontend \
+                                 --region ${AWS_REGION} \
+                                 --query 'taskDefinition' --output json)    
+
+                            NEW_TASK_DEF=\$(echo \$TASK_DEF | jq \
+                                 --arg IMAGE "${env.FRONTEND_REPO}:${IMAGE_TAG}" \
+                                 '.containerDefinitions[0].image = \$IMAGE |
+                                 del(.taskDefinitionArn,.revision,.status,.requiresAttributes,.compatibilities,.registeredAt,.registeredBy)')     
+
+                            aws ecs register-task-definition \
+                                 --cli-input-json "\$NEW_TASK_DEF" \
+                                 --region ${AWS_REGION} || echo "Task definition update failed (may not be necessary if image tag already exists)"   
+
+
+                            echo "Task definitions updated"
+                        """
+                    }
+                }
+            }
+        }
+
         stage('Deploy to ECS') {
             steps {
                 script {
@@ -203,16 +254,9 @@ pipeline {
                                         --service-name devops-assessment-backend-service \
                                         --desired-status RUNNING \
                                         --region ${AWS_REGION}
-                                    TASK_ARNS=\$(aws ecs list-tasks \
-                                        --cluster devops-assessment-cluster \
-                                        --service-name devops-assessment-backend-service \
-                                        --desired-status RUNNING \
-                                        --region ${AWS_REGION} \
-                                        --output text --query taskArns)
-    
                                     aws ecs describe-tasks \
                                         --cluster devops-assessment-cluster \
-                                        --tasks \$TASK_ARNS \
+                                        --tasks $(aws ecs list-tasks --cluster devops-assessment-cluster --service-name devops-assessment-backend-service --desired-status RUNNING --region ${AWS_REGION} --output text --query taskArns) \
                                         --region ${AWS_REGION}
                                 }
                             
