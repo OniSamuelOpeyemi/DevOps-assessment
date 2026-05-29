@@ -69,7 +69,49 @@ resource "aws_iam_policy" "ecs_secretsmanager" {
   })
 }
 
-# 2. Attach the policy to your ECS Task Role
+#  ECR + Logs Policy for ECS Task Execution Role
+resource "aws_iam_policy" "ecs_task_ecr_logs" {
+  name          = "ecs-task-ecr-${var.app_name}"
+  description   = "Allow ECS task to pull images from ECR and write logs"
+
+  policy = jsonencode({
+    Version: "2012-10-17",
+    Statement: [{
+      Effect    = "Allow",
+      Action    = "ecr:GetAuthorizationToken",
+      Resource  = "*"
+    },
+
+    {
+      Effect  = "Allow",
+      Action  = [
+        "ecr:BatchCheckLayerAvailability",
+        "ecr:GetDownloadUrlForLayer",
+        "ecr:BatchGetImage"
+      ],
+      Resource  = "arn:aws:ecr:us-east-1:577638388381:repository/*"
+    },
+    
+    {
+      Effect  = "Allow",
+      Action  = [
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      Resource  = "arn:aws:logs:us-east-1:577638388381:log-group:/ecs/*:*"
+    }
+  ]
+})
+
+}
+
+# Attach ECR policy to ECS Task Role
+resource "aws_iam_role_policy_attachment" "ecs_ecr_logs" {
+  role        = aws_iam_role.ecs_task_execution.name
+  policy_arn  = aws_iam_policy.ecs_task_ecr_logs.arn
+}
+
+#  Attach the policy to your ECS Task Role
 resource "aws_iam_role_policy_attachment" "ecs_secretsmanager" {
   role       = aws_iam_role.ecs_task_execution.name
   policy_arn = aws_iam_policy.ecs_secretsmanager.arn
