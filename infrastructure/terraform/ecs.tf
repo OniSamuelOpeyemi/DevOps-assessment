@@ -52,6 +52,29 @@ resource "aws_iam_role_policy_attachment" "ecs_task_execution" {
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
 }
 
+# ECS Secrets Manager policy
+resource "aws_iam_policy" "ecs_secretsmanager" {
+  name        = "ecs-task-secretsmanager-${var.app_name}"
+  description = "Allow ECS task to read specific secrets"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect   = "Allow"
+        Action   = ["secretsmanager:GetSecretValue"]
+        Resource = "arn:aws:secretsmanager:us-east-1:577638388381:secret:devops-assessment-db-password-*"
+      }
+    ]
+  })
+}
+
+# 2. Attach the policy to your ECS Task Role
+resource "aws_iam_role_policy_attachment" "ecs_secretsmanager" {
+  role       = aws_iam_role.ecs_task_execution.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
 # ECS Task Role (for CloudWatch)
 resource "aws_iam_role" "ecs_task" {
   name = "${var.app_name}-ecs-task-role"
