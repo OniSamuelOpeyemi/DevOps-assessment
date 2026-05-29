@@ -63,7 +63,7 @@ resource "aws_iam_policy" "ecs_secretsmanager" {
       {
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue"]
-        Resource = "arn:aws:secretsmanager:us-east-1:577638388381:secret:devops-assessment-db-password-*"
+        Resource = "arn:aws:secretsmanager:us-east-1:577638388381:secret:devops-assessment-db-password-20260528151610873900000001-j5NiTV"
       }
     ]
   })
@@ -72,7 +72,7 @@ resource "aws_iam_policy" "ecs_secretsmanager" {
 # 2. Attach the policy to your ECS Task Role
 resource "aws_iam_role_policy_attachment" "ecs_secretsmanager" {
   role       = aws_iam_role.ecs_task_execution.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+  policy_arn = aws_iam_policy.ecs_secretsmanager.arn
 }
 
 # ECS Task Role (for CloudWatch)
