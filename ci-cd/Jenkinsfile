@@ -17,6 +17,19 @@ pipeline {
     
     stages {
         
+        stage('Initial Cleanup') {
+            steps {
+                deleteDir()  // Built-in Jenkins step
+        
+                 // Extra safety
+                sh '''
+                    chown -R jenkins:jenkins ${WORKSPACE} || true
+                    chmod -R u+rwX ${WORKSPACE} || true
+                     rm -rf node_modules || true
+                '''
+                }
+            }
+        }
 
         stage('Clean Workspace') {
             steps {
