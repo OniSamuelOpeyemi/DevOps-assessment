@@ -28,7 +28,7 @@ pipeline {
                  deleteDir()  // Built-in Jenkins step again to ensure cleanup
                 }
             }
-        }
+        
 
         stage('Setup') {
             steps {
