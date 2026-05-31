@@ -19,14 +19,13 @@ pipeline {
         
         stage('Initial Cleanup') {
             steps {
-                deleteDir()  // Built-in Jenkins step
-        
                  // Extra safety
                 sh '''
                     chown -R jenkins:jenkins ${WORKSPACE} || true
                     chmod -R u+rwX ${WORKSPACE} || true
                      rm -rf node_modules || true
                 '''
+                 deleteDir()  // Built-in Jenkins step again to ensure cleanup
                 }
             }
         }
@@ -84,6 +83,7 @@ pipeline {
                             sh '''
                                 npm install --prefer-offline --no-audit
                                 npm test -- --watchAll=false --passWithNoTests || echo "Tests completed"
+                                rm -rf node_modules  # ← clean up before leaving the container
                             '''
                         }
                     }
@@ -102,6 +102,7 @@ pipeline {
                             sh '''
                                 npm install --prefer-offline --no-audit
                                 npm test || echo "Tests completed"
+                                rm -rf node_modules  # ← clean up before leaving the container
                             '''
                         }
                     }
@@ -114,7 +115,7 @@ pipeline {
                 script {
                      sh """
                         docker compose -f ci-cd/docker/docker-compose.yml build
-                        docker image
+                        docker imageS
                     
                           # Tag the built images for ECR
                         docker tag devops-assessment-frontend:latest ${env.FRONTEND_REPO}:${IMAGE_TAG}
@@ -378,9 +379,9 @@ pipeline {
     
     post {
         always {
-            echo 'Cleaning up...'
-            sh 'docker system prune -af --volumes || true'
-            cleanWs()
+            node('') {
+                echo 'Cleaning up...'
+                sh 'docker system prune -af --volumes || true'
         }
         
         success {
@@ -415,13 +416,13 @@ pipeline {
                         [$class: 'AmazonWebServicesCredentialsBinding', 
                          credentialsId: 'aws-credentials']
                     ]) {
-                        sh """
+                        sh '''
                             aws sns publish \
                                 --topic-arn arn:aws:sns:${AWS_REGION}:${AWS_ACCOUNT_ID}:devops-assessment-alerts \
                                 --message "Deployment failed - Build #${BUILD_NUMBER}. Check Jenkins for details." \
                                 --subject "DevOps Assessment - Deployment Failed" \
                                 --region ${AWS_REGION} || echo "SNS notification failed"
-                        """
+                        '''
                     }
                 } catch (Exception e) {
                     echo "SNS notification skipped: ${e.message}"
