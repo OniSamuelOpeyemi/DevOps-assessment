@@ -30,21 +30,6 @@ pipeline {
             }
         }
 
-        stage('Clean Workspace') {
-            steps {
-                script {
-                    // Aggressive cleanup
-                    sh '''
-                        echo "Cleaning workspace..."
-                        sudo rm -rf ${WORKSPACE}/* || true
-                        sudo rm -rf ${WORKSPACE}/.* || true
-                    '''
-                }
-            }
-        }
-
-
-
         stage('Setup') {
             steps {
                 script {
