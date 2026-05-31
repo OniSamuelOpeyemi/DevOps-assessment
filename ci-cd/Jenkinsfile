@@ -4,10 +4,10 @@ pipeline {
     options {
         timeout(time: 30, unit: 'MINUTES') // Set a timeout for the entire pipeline
         timestamps() // Add timestamps to the console output
-        ansiColor('xterm') // Enable ANSI color support in the console output
+       // ansiColor('xterm') // Enable ANSI color support in the console output
         buildDiscarder(logRotator(numToKeepStr: '10', daysToKeepStr: '30')) // Keep only the last 10 builds and builds from the last 30 days
         disableConcurrentBuilds() // Prevent concurrent builds of the same job
-        cleanWs() // Clean the workspace before starting the build
+       // cleanWs() // Clean the workspace before starting the build
     }
 
     environment {
@@ -16,6 +16,23 @@ pipeline {
     }
     
     stages {
+        
+
+        stage('Clean Workspace') {
+            steps {
+                script {
+                    // Aggressive cleanup
+                    sh '''
+                        echo "Cleaning workspace..."
+                        sudo rm -rf ${WORKSPACE}/* || true
+                        sudo rm -rf ${WORKSPACE}/.* || true
+                    '''
+                }
+            }
+        }
+
+
+
         stage('Setup') {
             steps {
                 script {
