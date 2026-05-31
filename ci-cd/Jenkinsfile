@@ -1,5 +1,14 @@
 pipeline {
     agent any
+
+    options {
+        timeout(time: 30, unit: 'MINUTES') // Set a timeout for the entire pipeline
+        timestamps() // Add timestamps to the console output
+        ansiColor('xterm') // Enable ANSI color support in the console output
+        disableConcurrentBuilds() // Prevent concurrent builds of the same job
+        buildDiscarder(logRotator(numToKeepStr: '10')) // Keep only the last 10 builds
+        cleanWs() // Clean the workspace before the build starts
+    }
     
     environment {
         AWS_REGION = 'us-east-1'
@@ -7,6 +16,7 @@ pipeline {
     }
     
     stages {
+        
         stage('Setup') {
             steps {
                 script {
@@ -340,7 +350,8 @@ pipeline {
     post {
         always {
             echo 'Cleaning up...'
-            sh 'docker system prune -af --volumes || true'
+            sh 'docker system prune -af --volumes || true',
+            cleanup() // Clean up the workspace after the build
         }
         
         success {
