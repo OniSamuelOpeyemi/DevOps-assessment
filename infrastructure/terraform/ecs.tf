@@ -63,7 +63,7 @@ resource "aws_iam_policy" "ecs_secretsmanager" {
       {
         Effect   = "Allow"
         Action   = ["secretsmanager:GetSecretValue"]
-        Resource = "arn:aws:secretsmanager:us-east-1:577638388381:secret:devops-assessment-db-password-20260528151610873900000001-j5NiTV"
+        Resource = "arn:aws:secretsmanager:us-east-1:577638388381:secret:devops-assessment*"
       }
     ]
   })

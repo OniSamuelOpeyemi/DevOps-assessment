@@ -25,7 +25,7 @@ jobs:
       - name: Use Node.js 18
         uses: actions/setup-node@v4
         with:
-          node-version: Lts/*
+          node-version:  lts/*
 
       - name: Install and Test Frontend
         working-directory: application/frontend
@@ -42,7 +42,7 @@ jobs:
       - name: Use Node.js 18
         uses: actions/setup-node@v4
         with:
-          node-version: Lts/*
+          node-version:  lts/*
 
       - name: Install and Test Backend
         working-directory: application/backend
